@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patients</title>
+  <link rel="stylesheet" href="styles/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Patients</h1>
+    <form id="addPatientForm">
+      <h2>Add Patient</h2>
+      <input type="text" id="patientName" placeholder="Name" required>
+      <input type="number" id="patientAge" placeholder="Age" required>
+      <input type="text" id="patientGender" placeholder="Gender" required>
+      <input type="text" id="patientContact" placeholder="Contact" required>
+      <input type="text" id="patientAddress" placeholder="Address" required>
+      <input type="text" id="patientMedicalHistory" placeholder="Medical History" required>
+      <button type="submit">Add Patient</button>
+    </form>
+    <h2>Patient List</h2>
+    <ul id="patientList"></ul>
+  </div>
+  <script src="scripts/main.js"></script>
+</body>
+</html>

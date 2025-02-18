@@ -1,0 +1,296 @@
+const API_BASE_URL = "http://localhost:5000/api";
+let authToken = localStorage.getItem("token");
+let adminId = localStorage.getItem("adminId");
+
+// 📝 Register a New User (Admin, Doctor, etc.)
+document.getElementById("registerForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
+
+    const userData = { name, email, password, role };
+
+    try {
+        const response = await fetch("http://localhost:5000/api/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userData),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("User registered successfully!");
+            window.location.href = "index.html"; // Redirect to login
+        } else {
+            alert(`Error: ${data.message}`);
+        }
+    } catch (error) {
+        console.error("Error during registration:", error);
+        alert("Something went wrong. Please try again.");
+    }
+});
+
+
+
+
+
+
+
+// 🔐 User Login (Admin, Doctor, etc.)
+// 🔐 User Login (Admin, Doctor, etc.)
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.token) {
+            // ✅ Store admin details in localStorage
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('adminId', data.user.id);
+            localStorage.setItem('adminName', data.user.name);
+            localStorage.setItem('adminEmail', data.user.email);
+            localStorage.setItem('adminRole', data.user.role);
+            
+            window.location.href = 'dashboard.html'; // Redirect to dashboard
+        } else {
+            alert(data.message || 'Login failed!');
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+    }
+});
+
+// 🔓 Logout Function
+function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("adminId");
+    localStorage.removeItem("adminName");
+    localStorage.removeItem("adminRole");
+    localStorage.removeItem("adminEmail");
+    window.location.href = "index.html";
+}
+
+// 📌 Display Admin Info in Dashboard
+document.addEventListener("DOMContentLoaded", function () {
+    if (document.getElementById("adminName")) {
+        document.getElementById("adminName").innerText = localStorage.getItem("adminName") || "Not Available";
+        document.getElementById("adminRole").innerText = localStorage.getItem("adminRole") || "Not Available";
+        document.getElementById("adminEmail").innerText = localStorage.getItem("adminEmail") || "Not Available";
+        document.getElementById("adminId").innerText = localStorage.getItem("adminId") || "Not Available";
+    }
+});
+
+// 🏥 Fetch All Patients
+async function fetchPatients() {
+    if (!authToken) {
+        alert("Unauthorized! Please log in again.");
+        window.location.href = "index.html";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/patients`, {
+            method: "GET",
+            headers: { 
+                "Authorization": `Bearer ${authToken}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        const data = await response.json();
+        const patientList = document.getElementById("patientList");
+        patientList.innerHTML = ""; // Clear existing table content
+
+        if (Array.isArray(data) && data.length > 0) {
+            data.forEach(patient => {
+                const createdAt = new Date(patient.createdAt).toLocaleString();
+                const updatedAt = new Date(patient.updatedAt).toLocaleString();
+
+                patientList.innerHTML += `
+                    <tr>
+                        <td>${patient.name}</td>
+                        <td>${patient.age}</td>
+                        <td>${patient.gender}</td>
+                        <td>${patient.address}</td>
+                        <td>${patient.contact}</td>
+                        <td>${patient.wardNumber}</td>
+                        <td>${patient.status}</td>
+                        <td>${createdAt}</td>
+                        <td>${updatedAt}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            patientList.innerHTML = `<tr><td colspan="10" class="text-center">No patients found.</td></tr>`;
+        }
+    } catch (error) {
+        console.error("❌ Fetch patients error:", error);
+        alert("An error occurred while fetching patients.");
+    }
+}
+
+// ➕ Register New Patient
+// ➕ Register New Patient
+document.addEventListener("DOMContentLoaded", function () {
+    const registerForm = document.getElementById("registerForm"); // Ensure you have this form in your HTML
+
+    if (registerForm) {
+        registerForm.addEventListener("submit", async function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const token = localStorage.getItem('$authToken'); // Get token from localStorage
+            if (!token) {
+                alert("Unauthorized! Please log in first.");
+                return;
+            }
+
+            // Collect form data
+            const patientData = {
+                name: document.getElementById("name").value,
+                age: document.getElementById("age").value,
+                gender: document.getElementById("gender").value,
+                address: document.getElementById("address").value,
+                contact: document.getElementById("contact").value,
+                wardNumber: document.getElementById("wardNumber").value,
+                status: document.getElementById("status").value
+            };
+
+            try {
+                const response = await fetch("http://localhost:5000/api/patients/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${authToken}` // Send token in headers
+                    },
+                    body: JSON.stringify(patientData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert("Patient registered successfully!");
+                    window.location.reload(); // Reload the page to show updates
+                } else {
+                    alert(`Error: ${data.error || "Failed to register patient"}`);
+                }
+            } catch (error) {
+                console.error("Error registering patient:", error);
+                alert("Something went wrong!");
+            }
+        });
+    }
+});
+
+
+
+// 📌 Display Admin Info on Dashboard
+// function displayAdminInfo() {
+//     const name = localStorage.getItem("adminName") || "Not Available";
+//     const role = localStorage.getItem("adminRole") || "Not Available";
+//     const email = localStorage.getItem("adminEmail") || "Not Available";
+//     const adminId = localStorage.getItem("adminId") ||  "nei"; 
+
+//     document.getElementById("adminName").innerText = name;
+//     document.getElementById("adminRole").innerText = role;
+//     document.getElementById("adminEmail").innerText = email;
+//     document.getElementById("adminEmail").innerText = adminId;
+// }
+
+// Load functions on page load
+document.addEventListener("DOMContentLoaded", function () {
+    displayAdminInfo();
+    if (document.getElementById("patientList")) fetchPatients();
+    if (document.getElementById("logoutButton")) document.getElementById("logoutButton").addEventListener("click", logout);
+});
+
+
+// 📌 Fetch Admin Profile & Store in LocalStorage
+async function fetchProfile() {
+    if (!authToken) return logout();
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+            headers: { "Authorization": `Bearer ${authToken}` }
+        });
+
+        const user = await response.json();
+        if (response.ok) {
+            // Store user details in localStorage
+            localStorage.setItem('adminId', user.id);
+            localStorage.setItem('adminName', user.name);
+            localStorage.setItem('adminEmail', user.email);
+            localStorage.setItem('adminRole', user.role);
+            
+            // Update UI
+            displayAdminInfo();
+        } else {
+            logout();
+        }
+    } catch (error) {
+        console.error("Profile fetch error:", error);
+        logout();
+    }
+}
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    fetchAdminProfile();
+});
+
+// // Fetch Admin Profile Data
+// function fetchAdminProfile() {
+//     const token = localStorage.getItem("token"); // Retrieve token from local storage
+
+//     if (!token) {
+//         alert("Unauthorized! Please log in.");
+//         window.location.href = "index.html"; // Redirect to login page if token is missing
+//         return;
+//     }
+
+//     fetch("http://localhost:5000/api/auth/profile", {
+//         method: "GET",
+//         headers: {
+//             "Authorization": `Bearer ${token}`
+//         }
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             throw new Error("Failed to fetch profile data");
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         // Update the dashboard with admin details
+//         document.getElementById("adminName").textContent = data.name || "N/A";
+//         document.getElementById("adminRole").textContent = data.role || "N/A";
+//         document.getElementById("adminEmail").textContent = data.email || "N/A";
+//         document.getElementById("adminId").textContent = data.id || "N/A";
+//     })
+//     .catch(error => {
+//         console.error("Error fetching admin profile:", error);
+//         alert("Error fetching profile. Please log in again.");
+//         window.location.href = "index.html"; // Redirect on error
+//     });
+// }
+
+// Logout Function
+function logout() {
+    localStorage.removeItem("token"); // Remove token from storage
+    window.location.href = "index.html"; // Redirect to login page
+}
